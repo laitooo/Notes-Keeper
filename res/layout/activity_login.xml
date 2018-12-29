@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_login"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="zxc.laitooo.noteskeeper.LoginActivity"
+    android:background="@color/theme_color5">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:text="Notes Keeper"
+                android:textColor="@color/theme_color1"
+                android:textSize="40dp"
+                android:textAlignment="center"
+                android:paddingTop="100dp"
+                android:id="@+id/logo_image"
+                android:layout_height="200dp"
+                android:cropToPadding="false" />
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:inputType="textEmailAddress"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="30dp"
+                android:id="@+id/login_email"
+                android:textColor="@color/theme_color4"
+                android:hint="Email"
+                android:paddingLeft="16dp"
+                android:textColorHint="@color/theme_color2"
+                android:layout_below="@+id/logo_image"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/rounded_layout" />
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:inputType="textPassword"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="30dp"
+                android:textColor="@color/theme_color4"
+                android:id="@+id/login_password"
+                android:hint="Password"
+                android:paddingLeft="16dp"
+                android:textColorHint="@color/theme_color2"
+                android:layout_below="@+id/login_email"
+                android:layout_centerHorizontal="true"
+                android:background="@drawable/rounded_layout" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/pass_error"
+                android:layout_below="@+id/login_password"
+                android:layout_alignRight="@+id/login_password"
+                android:layout_marginRight="16dp"
+                android:textSize="16dp"
+                android:textColor="@color/red"/>
+
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="50dp"
+                android:layout_marginRight="50dp"
+                android:layout_marginTop="50dp"
+                android:onClick="login"
+                android:id="@+id/button_login"
+                android:text="Login"
+                android:textSize="18dp"
+                android:textColor="@color/theme_color4"
+                android:background="@drawable/rounded_button"
+                android:layout_below="@+id/login_password"
+                />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@+id/button_login"
+                android:text="Dont have acount? Sign up"
+                android:textColor="@color/theme_color3"
+                android:textSize="20dp"
+                android:layout_marginTop="30dp"
+                android:onClick="signAct"/>
+
+
+        </RelativeLayout>
+    </ScrollView>
+
+
+</RelativeLayout>

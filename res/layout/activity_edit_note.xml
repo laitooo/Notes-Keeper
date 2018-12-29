@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_new_note"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/theme_color5"
+    tools:context="zxc.laitooo.noteskeeper.NewNoteActivity">
+
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/ds">
+
+    </android.support.design.widget.AppBarLayout>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:inputType="textEmailAddress"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="30dp"
+        android:id="@+id/edit_note_title"
+        android:textColor="@color/theme_color4"
+        android:hint="Title"
+        android:layout_below="@+id/ds"
+        android:paddingLeft="16dp"
+        android:textColorHint="@color/theme_color2"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/rounded_layout" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:inputType="textMultiLine"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="30dp"
+        android:textColor="@color/theme_color4"
+        android:id="@+id/edit_note_content"
+        android:paddingLeft="16dp"
+        android:hint="Content"
+        android:textColorHint="@color/theme_color2"
+        android:layout_below="@+id/edit_note_title"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/rounded_layout"
+        android:layout_above="@+id/note_button_edit" />
+
+
+    <Button
+        android:layout_width="200dp"
+        android:layout_height="45dp"
+        android:id="@+id/note_button_edit"
+        android:layout_centerHorizontal="true"
+        android:textSize="20dp"
+        android:text="Save"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="10dp"
+        android:layout_alignParentBottom="true"
+        android:textColor="@color/theme_color4"
+        android:background="@drawable/rounded_button"/>
+</RelativeLayout>
