@@ -1,5 +1,6 @@
 package zxc.laitooo.noteskeeper;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -29,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -65,6 +68,7 @@ public class MainActivity extends AppCompatActivity
      **********************************************************************************************/
 
     String UserName;
+    private int ID;
 
     public static TextView empty;
 
@@ -138,6 +142,7 @@ public class MainActivity extends AppCompatActivity
 
         ManageUser m = new ManageUser(getApplicationContext());
         UserName = m.GetUserName();
+        ID = m.GetUserId();
         /*s = " id = " + m.GetUserId()+ "\n user name = " + m.GetUserName() +
                 "\n email = " + m.GetUserName();
         TextView k = (TextView)findViewById(R.id.username);
@@ -190,15 +195,13 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(getApplicationContext(), "you logged out Successfully", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(getApplicationContext(),LoginActivity.class));
             finish();
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
         } else if (id == R.id.nav_manage) {
 
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
+
+        } else if (id == R.id.nav_donate) {
 
         }
 
@@ -261,7 +264,7 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 protected Map<String, String> getParams() throws AuthFailureError {
                     Map<String,String> parameters  = new HashMap<String, String>();
-                    parameters.put("username",UserName);
+                    parameters.put("id_user",String.valueOf(ID));
                     return parameters;
                 }
             };
@@ -372,7 +375,7 @@ public class MainActivity extends AppCompatActivity
                 //setHasOptionsMenu(true);
 
                 swipe = (SwipeRefreshLayout)rootView.findViewById(R.id.refresh_layot);
-                swipe.setColorScheme(Color.BLUE,Color.RED,Color.GREEN);
+                //swipe.setColorScheme(Color.BLUE,Color.RED,Color.GREEN);
                 swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
@@ -382,7 +385,7 @@ public class MainActivity extends AppCompatActivity
                 });
 
 
-                FloatingActionButton fab = (FloatingActionButton)rootView.findViewById(R.id.fab);
+                FloatingActionButton fab = (FloatingActionButton)rootView.findViewById(R.id.fab_main);
                 fab.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -419,7 +422,8 @@ public class MainActivity extends AppCompatActivity
                 fab.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        startActivity(new Intent(c,NewGroupActivity.class));
+                        NewGroupDialog dialogss = new NewGroupDialog(c);
+                        dialogss.show(getFragmentManager(),"");
                     }
                 });
 
