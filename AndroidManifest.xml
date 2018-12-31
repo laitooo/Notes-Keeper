@@ -51,7 +51,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="zxc.laitooo.noteskeeper.MainActivity" />
         </activity>
-        <activity android:name=".NewGroupActivity"></activity>
+        <activity android:name=".UploadPictureActivity"
+            android:theme="@style/hannen"></activity>
     </application>
 
 </manifest>
