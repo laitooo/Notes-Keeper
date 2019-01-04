@@ -18,11 +18,11 @@ class groupsOperations
 		$this->con = $db->connectDB();
 	}
 
-	public function createGroup( $gruopname , $adminname , $link){
+	public function createGroup( $groupname , $id_admin , $link){
 		$num = $this->numGroups() + 1;
-		$stmt = $this->con->prepare("INSERT INTO `groups` (`id`, `gruopname`, `adminname` ,`link`) 
-			VALUES ($num,?,?,?");
-		$stmt->bind_param("sss",$gruopname,$adminname,$link);
+		$stmt = $this->con->prepare("INSERT INTO `groups` (`id`, `groupname`, `id_admin` ,`link`) 
+			VALUES ($num,?,?,?);");
+		$stmt->bind_param("sss",$groupname,$id_admin,$link);
 		if($stmt->execute()){
 			return 1;
 		}else{
@@ -35,8 +35,9 @@ class groupsOperations
 		include_once dirname(__FILE__).'/constants.php';
 		    
 		$cons=mysqli_connect(DB_HOST,DB_USER,DB_PASSWORD,DB_NAME);
-        $sqls="SELECT * FROM groups";
+        $sqls="SELECT * FROM `groups`";
 
+        $rowcount = 0;
         if ($resulta=mysqli_query($cons,$sqls)){
             $rowcount=mysqli_num_rows($resulta);
         }
@@ -46,29 +47,29 @@ class groupsOperations
 		return $rowcount;
 	}
 
-	public function findGruop($id){
-		$stmt = $this->con->prepare("SELECT * FROM groups WHERE id = ?");
+	public function findGroup($id){
+		$stmt = $this->con->prepare("SELECT * FROM `groups` WHERE id = ?");
 		$stmt->bind_param("s",$id);
-		$stmt->bind_result($id, $gruopname, $adminname, $link);
+		$stmt->bind_result($id, $groupname, $id_admin, $link);
 		$stmt->execute();
 		$stmt->fetch();
 
 		$ff = array();
 		$ff['id'] = $id;
-		$ff['gruopname'] = $gruopname;
-		$ff['adminname'] = $adminname;
+		$ff['groupname'] = $groupname;
+		$ff['id_admin'] = $id_admin;
 		$ff['link'] = $link;
 		return $ff;
 	}
 
-	public function isUserAdmin($id,$username){
+	public function isUserAdmin($id,$id_user){
 		$stmt = $this->con->prepare("SELECT * FROM groups WHERE id = ?");
 		$stmt->bind_param("s",$id);
-		$stmt->bind_result($id, $gruopname, $adminname, $link);
+		$stmt->bind_result($id, $groupname, $id_admin, $link);
 		$stmt->execute();
 		$stmt->fetch();
 
-		return $adminname==$username;
+		return $id_admin==$id_user;
 	}
 
 
