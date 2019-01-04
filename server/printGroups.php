@@ -6,23 +6,23 @@
 	$db = new connect();
 
 	$con = $db->connectDB();
+	
+	$temp_array = array();
 
 	if(isset($_POST["id_user"])){
-	$ind = $_POST["id_user"] +0;
+	$ind = (int)$_POST["id_user"];
 
-	$stmt = $con->prepare("SELECT * FROM members WHERE id_user = ?");
+	$stmt = $con->prepare("SELECT * FROM `members` WHERE `id_user` = ?");
 	$stmt->bind_param("s",$ind);
 	$stmt->bind_result($id_group, $id_user);
 	$stmt->execute();
 	
 	$counter = 0;
-	
-	$temp_array = array();
-	
+	$tmp = array();
 	while($stmt->fetch()){
 	    
 	    
-	    $tmp = array();
+	    
 	    $tmp["id_group"] = $id_group;
 	    $tmp["id_user"] = $id_user;
 	    $db = new groupsOperations();
@@ -32,20 +32,12 @@
 		$tmp["link"] = $ttt["link"];
 	    
 	    $temp_array[$counter] = $tmp;
-        $counter = $counter +1;
-	    /*echo '   '.$counter.
-	    '<span style="margin-left:2em"> </span>'.$title.
-	    '<span style="margin-left:2em"> </span>'.
-	    $content.'<span style="margin-left:2em"> </span>'.
-	    $date.'<br></br>';*/
+        $counter++;
+
 }
 
 		}
-	//if($number_of_rows > 0) {
-		//while ($row = mysqli_fetch_assoc($result)) {
-		//	$temp_array[] = $row;
-		//}
-	//}
+
 	
 	
 	
@@ -55,7 +47,6 @@
 	
 	
 	
-//}
 
 
 
