@@ -13,3 +13,4 @@ done:
 4- editing notes
 5- showing notes
 6- creating notes group
+7- deleting notes
