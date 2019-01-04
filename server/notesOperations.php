@@ -69,7 +69,7 @@ class notesOperations
 	}
 
 	public function deleteNote($id){
-		$stmt = $this->con->prepare("DELETE notes WHERE id = ?");
+		$stmt = $this->con->prepare("DELETE FROM notes WHERE id = ?");
 		$stmt->bind_param("s",$id);
 		if($stmt->execute()){
 			return 1;
