@@ -1,25 +1,21 @@
 package zxc.laitooo.noteskeeper;
 
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -27,13 +23,10 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,11 +35,9 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParseException;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,30 +51,35 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     /***********************************************************************************************
-     **TODO:
-     *  1- Show only users notes
-     *  2- what happens when there is no internet
-     *  3- offline features
-     *  4- check if there is internet connection
+     **TODO:                                                                                       *
+     *  1- Show only users notes                                                    done           *
+     *  2- what happens when there is no internet                                                  *
+     *  3- offline features                                                                        *
+     *  4- check if there is internet connection                                                   *
      **********************************************************************************************/
 
     String UserName;
     private int ID;
 
-    public static TextView empty;
+    public static TextView empty_notes;
+    public static TextView empty_groups;
 
-    public static ArrayList<Note> list_notes,list_groups;
+    public static ArrayList<Note> list_notes;
+    public static ArrayList<Group> list_groups;
     private RequestQueue mRequest;
-    public static NotesAdapter adapter,adapter2;
+    public static NotesAdapter adapter;
+    public static GroupsAdapter adapter2;
     static ProgressDialog progressDialog;
 
     public static String Print_url = "http://notes-keeper.000webhostapp.com/printNotes.php";
+    public static String Groups_url = "http://notes-keeper.000webhostapp.com/printGroups.php";
 
 
     ImageView profile;
     TextView profileName;
 
     public static SwipeRefreshLayout swipe;
+    public static SwipeRefreshLayout swipe2;
 
 
     public static Context c;
@@ -105,6 +101,7 @@ public class MainActivity extends AppCompatActivity
 
 
     static nl j;
+    static ng j2;
 
 
 
@@ -115,7 +112,15 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
+        try {
+            Intent i = getIntent();
+            String action = i.getAction();
+            Uri data = i.getData();
+            Toast.makeText(getApplicationContext(),"joined " + data.toString() + " - "+
+                    action,Toast.LENGTH_LONG).show();
+        }catch (Exception e){
+            //d
+        }
 
 
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -128,6 +133,7 @@ public class MainActivity extends AppCompatActivity
         tabLayout.setupWithViewPager(mViewPager);
 
         j = new nl();
+        j2 = new ng();
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -157,6 +163,7 @@ public class MainActivity extends AppCompatActivity
         progressDialog.setTitle("Please wait...");
         progressDialog.show();
         new nl().execute();
+        new ng().execute();
 
         View header = navigationView.getHeaderView(0);
         profile = (ImageView)header.findViewById(R.id.imageView_profile);
@@ -166,6 +173,17 @@ public class MainActivity extends AppCompatActivity
                 startActivity(new Intent(getApplicationContext(),ProfileActivity.class));
             }
         });
+        try {
+            Picasso.with(MainActivity.this)
+                    .load("http://notes-keeper.000webhostapp.com/profile_pictures/profile_1.png")
+                    .resizeDimen(R.dimen.picture_size,R.dimen.picture_size)
+                    .placeholder(R.mipmap.ic_launcher)
+                    .skipMemoryCache()
+                    .centerCrop()
+                    .into(profile);
+        }catch (Exception e){
+            Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+        }
         profileName = (TextView)header.findViewById(R.id.username_profile);
         profileName.setText(UserName);
 
@@ -189,7 +207,10 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.menu_logout) {
+        if (id == R.id.nav_create_group) {
+            MyDialogs dialogss = new MyDialogs(c,MyDialogs.TAG_NEW_GROUP_MAIN);
+            dialogss.show(getSupportFragmentManager(),"");
+        }else if (id == R.id.menu_logout) {
             ManageUser m = new ManageUser(getApplicationContext());
             m.DeleteUser();
             Toast.makeText(getApplicationContext(), "you logged out Successfully", Toast.LENGTH_SHORT).show();
@@ -224,7 +245,7 @@ public class MainActivity extends AppCompatActivity
                         //Toast.makeText(c,s,Toast.LENGTH_LONG).show();
                         if (notes.length()==0){
                             progressDialog.dismiss();
-                            empty.setText("You dont have notes yet");
+                            empty_notes.setText("You dont have notes yet");
                         }else {
 
                             for (int i = notes.length() - 1; i >= 0; i--) {
@@ -243,8 +264,9 @@ public class MainActivity extends AppCompatActivity
 
                     }catch (JSONException e){
                         progressDialog.dismiss();
-                        swipe.setRefreshing(false);
-
+                        if (swipe.isRefreshing()) {
+                            swipe.setRefreshing(false);
+                        }
                         //empty.setText("Json Exception \n      try again");
                         Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_LONG).show();
                         j = new nl();
@@ -254,10 +276,11 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onErrorResponse(VolleyError volleyError) {
                     progressDialog.dismiss();
-                    swipe.setRefreshing(false);
-
+                    if (swipe.isRefreshing()) {
+                        swipe.setRefreshing(false);
+                    }
                     //Toast.makeText(getApplicationContext(),"",Toast.LENGTH_LONG).show();
-                    empty.setText("Connection Error \n      try again");
+                    empty_notes.setText("Connection Error \n      try again");
                     j = new nl();
                 }
             }){
@@ -268,7 +291,85 @@ public class MainActivity extends AppCompatActivity
                     return parameters;
                 }
             };
+            request.setShouldCache(false);
 
+            mRequest.add(request);
+            return null;
+        }
+
+    }public class ng extends AsyncTask{
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+
+            StringRequest request = new StringRequest(Request.Method.POST, Groups_url, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String s) {
+                    //Toast.makeText(getApplicationContext(),s,Toast.LENGTH_LONG).show();
+                    try{
+                        JSONObject gr = new JSONObject(s);
+                        JSONArray group = gr.getJSONArray("groups");
+                        //Toast.makeText(c,s,Toast.LENGTH_LONG).show();
+                        if (group.length()==0){
+                            //progressDialog.dismiss();
+                            //Toast.makeText(getApplicationContext(),"You don't have groups yet",
+                            //        Toast.LENGTH_LONG).show();
+                            empty_groups.setText("You don't have groups yet");
+                        }else {
+
+                            for (int i = group.length() - 1; i >= 0; i--) {
+                                JSONObject g = group.getJSONObject(i);
+                                list_groups.add(new Group(g.getInt("id_group"),g.getString("groupname"),
+                                        g.getInt("id_admin"), g.getString("link"),getApplicationContext()));
+                            }
+                            //progressDialog.dismiss();
+                            adapter2.notifyDataSetChanged();
+                        }
+                        //if (swipe.isRefreshing()) {
+                        //    swipe.setRefreshing(false);
+                        //}
+                        j2 = new ng();
+                        if (swipe2.isRefreshing()) {
+                            swipe2.setRefreshing(false);
+                        }
+
+
+                    }catch (JSONException e){
+                        //progressDialog.dismiss();
+                        //swipe.setRefreshing(false);
+                        if (swipe2.isRefreshing()) {
+                            swipe2.setRefreshing(false);
+                        }
+
+                        empty_groups.setText("Json Exception \n      try again s" + e.getMessage());
+                        //Toast.makeText(getApplicationContext(),"excep_gr" +
+                        //        e.getMessage(),Toast.LENGTH_LONG).show();
+                        j2 = new ng();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    //progressDialog.dismiss();
+                    //swipe.setRefreshing(false);
+                    if (swipe2.isRefreshing()) {
+                        swipe2.setRefreshing(false);
+                    }
+
+                    //Toast.makeText(getApplicationContext(),"gr"+volleyError.getMessage()
+                    //        ,Toast.LENGTH_LONG).show();
+                    empty_groups.setText("Connection Error \n      try again "+ volleyError.getMessage());
+                    j2 = new ng();
+                }
+            }){
+                @Override
+                protected Map<String, String> getParams() throws AuthFailureError {
+                    Map<String,String> parameters  = new HashMap<String, String>();
+                    parameters.put("id_user",String.valueOf(ID));
+                    return parameters;
+                }
+            };
+            request.setShouldCache(false);
             mRequest.add(request);
             return null;
         }
@@ -370,7 +471,7 @@ public class MainActivity extends AppCompatActivity
 
                 View rootView = inflater.inflate(R.layout.content_main, container, false);
 
-                empty = (TextView) rootView.findViewById(R.id.no_notes);
+                empty_notes = (TextView) rootView.findViewById(R.id.no_notes);
 
                 //setHasOptionsMenu(true);
 
@@ -414,7 +515,7 @@ public class MainActivity extends AppCompatActivity
             }else if(index == 1 ){
                 View rootView = inflater.inflate(R.layout.groups_layout, container, false);
 
-                //empty = (TextView) rootView.findViewById(R.id.no_notes);
+                empty_groups = (TextView) rootView.findViewById(R.id.no_groups);
 
 
                 //empty.setText("You dont have notes yet");
@@ -422,8 +523,18 @@ public class MainActivity extends AppCompatActivity
                 fab.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        NewGroupDialog dialogss = new NewGroupDialog(c);
+                        MyDialogs dialogss = new MyDialogs(c,MyDialogs.TAG_NEW_GROUP_MAIN);
                         dialogss.show(getFragmentManager(),"");
+                    }
+                });
+
+                swipe2 = (SwipeRefreshLayout)rootView.findViewById(R.id.refresh_layot_gr);
+                //swipe.setColorScheme(Color.BLUE,Color.RED,Color.GREEN);
+                swipe2.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                    @Override
+                    public void onRefresh() {
+                        swipe2.setRefreshing(true);
+                        ds2();
                     }
                 });
 
@@ -434,12 +545,12 @@ public class MainActivity extends AppCompatActivity
                 //        "recommendation system app","12/17/2018"));
                 RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_groups);
                 recyclerView.setHasFixedSize(true);
-                list_groups.add(new Note(2464,"dsd","addasdasd","2019/12/23"));
-                list_groups.add(new Note(7655,"dsdsd asdas dasdas d","addasd dsadasd","2019/12/23"));
-                list_groups.add(new Note(8855,"dsds dad dasd","addasd 23sda 34asd","2019/12/23"));
+                //list_groups.add(new Group(2464,"dsd",1,));
+                //list_groups.add(new Group(7655,"dsdsd asdas dasdas d","addasd dsadasd","2019/12/23"));
+                //list_groups.add(new Group(8855,"dsds dad dasd","addasd 23sda 34asd","2019/12/23"));
                 RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(c);
                 recyclerView.setLayoutManager(layoutManager);
-                adapter2 = new NotesAdapter(list_groups, c);
+                adapter2 = new GroupsAdapter(list_groups, c);
                 recyclerView.setAdapter(adapter2);
                 return rootView;
             }
@@ -485,7 +596,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onRestart() {
         progressDialog.show();
-        empty.setText("");
+        empty_notes.setText("");
         list_notes.clear();
         adapter.notifyDataSetChanged();
         j.execute();
@@ -494,10 +605,17 @@ public class MainActivity extends AppCompatActivity
 
     public static void ds(){
         //progressDialog.show();
-        empty.setText("");
+        empty_notes.setText("");
         list_notes.clear();
         adapter.notifyDataSetChanged();
         j.execute();
+    }
+    public static void ds2(){
+        //progressDialog.show();
+        empty_groups.setText("");
+        list_groups.clear();
+        adapter2.notifyDataSetChanged();
+        j2.execute();
     }
 }
 
