@@ -3,6 +3,9 @@ package zxc.laitooo.noteskeeper;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -31,13 +34,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.squareup.picasso.MemoryPolicy;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Transformation;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,6 +67,9 @@ public class MainActivity extends AppCompatActivity
 
     String UserName;
     private int ID;
+    public int join_id;
+
+    static ConnectivityManager manager;
 
     public static TextView empty_notes;
     public static TextView empty_groups;
@@ -71,11 +81,21 @@ public class MainActivity extends AppCompatActivity
     public static GroupsAdapter adapter2;
     static ProgressDialog progressDialog;
 
-    public static String Print_url = "http://notes-keeper.000webhostapp.com/printNotes.php";
-    public static String Groups_url = "http://notes-keeper.000webhostapp.com/printGroups.php";
+    public static String Print_url = "http://192.168.43.4:80/app/printNotes.php";
+    public static String Groups_url = "http://192.168.43.4:80/app/printGroups.php";
+    public static String Profile_url = "http://192.168.43.4:80/app/getProfilePicture.php";
+
+
+    //public static String Print_url = "http://notes-keeper.000webhostapp.com/printNotes.php";
+    //public static String Groups_url = "http://notes-keeper.000webhostapp.com/printGroups.php";
+    //public static String Profile_url = "http://notes-keeper.000webhostapp.com/getProfilePicture.php";
+    public static String Join_url ;
+
+    public static String TAG_NO_PICTURE = "no_profile";
 
 
     ImageView profile;
+    String picture_name;
     TextView profileName;
 
     public static SwipeRefreshLayout swipe;
@@ -112,16 +132,9 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        try {
-            Intent i = getIntent();
-            String action = i.getAction();
-            Uri data = i.getData();
-            Toast.makeText(getApplicationContext(),"joined " + data.toString() + " - "+
-                    action,Toast.LENGTH_LONG).show();
-        }catch (Exception e){
-            //d
-        }
+        manager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
 
+        picture_name = TAG_NO_PICTURE;
 
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
@@ -132,8 +145,7 @@ public class MainActivity extends AppCompatActivity
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs_main);
         tabLayout.setupWithViewPager(mViewPager);
 
-        j = new nl();
-        j2 = new ng();
+
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -158,12 +170,19 @@ public class MainActivity extends AppCompatActivity
         progressDialog = new ProgressDialog(MainActivity.this);
         c = MainActivity.this;
 
+        j = new nl();
+        j2 = new ng();
+
         list_notes = new ArrayList<>();
         list_groups = new ArrayList<>();
-        progressDialog.setTitle("Please wait...");
-        progressDialog.show();
-        new nl().execute();
-        new ng().execute();
+
+        if (isThereConnection()) {
+            progressDialog.setTitle("Please wait...");
+            progressDialog.show();
+            new nl().execute();
+            new ng().execute();
+        }
+
 
         View header = navigationView.getHeaderView(0);
         profile = (ImageView)header.findViewById(R.id.imageView_profile);
@@ -173,21 +192,41 @@ public class MainActivity extends AppCompatActivity
                 startActivity(new Intent(getApplicationContext(),ProfileActivity.class));
             }
         });
-        try {
-            Picasso.with(MainActivity.this)
-                    .load("http://notes-keeper.000webhostapp.com/profile_pictures/profile_1.png")
-                    .resizeDimen(R.dimen.picture_size,R.dimen.picture_size)
-                    .placeholder(R.mipmap.ic_launcher)
-                    .skipMemoryCache()
-                    .centerCrop()
-                    .into(profile);
-        }catch (Exception e){
-            Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+
+        if (isThereConnection()) {
+            new loadProfile().execute();
+        }else {
+
+            if (!m.getProfile().equals(TAG_NO_PICTURE)) {
+                String pa = "http://192.168.43.4:80/app/profile_pictures/" +
+                        m.getProfile();
+
+                Picasso.with(getApplicationContext())
+                        .load(pa)
+                        .resizeDimen(R.dimen.picture_size, R.dimen.picture_size)
+                        .skipMemoryCache()
+                        .networkPolicy(NetworkPolicy.NO_CACHE)
+                        .memoryPolicy(MemoryPolicy.NO_CACHE)
+                        .into(profile);
+            }
         }
+
         profileName = (TextView)header.findViewById(R.id.username_profile);
         profileName.setText(UserName);
 
-
+        try {
+            Intent i = getIntent();
+            //String action = i.getAction();
+            Join_url = i.getData().toString();
+            String jj = Join_url.replace("http://192.168.43.4:80/app/joinGroup.php?id=","");
+            join_id = Integer.parseInt(jj);
+            new join_group().execute();
+            //Toast.makeText(getApplicationContext(),"joined " + data.toString() + " - "+
+            //        action,Toast.LENGTH_LONG).show();
+        }catch (Exception e){
+            //ds
+            join_id=0;
+        }
 
     }
 
@@ -232,6 +271,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     public class nl extends AsyncTask{
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            empty_notes.setText("");
+            empty_groups.setText("");
+        }
 
         @Override
         protected Object doInBackground(Object[] params) {
@@ -297,12 +343,14 @@ public class MainActivity extends AppCompatActivity
             return null;
         }
 
-    }public class ng extends AsyncTask{
+    }
+
+    public class ng extends AsyncTask{
 
         @Override
         protected Object doInBackground(Object[] params) {
 
-            StringRequest request = new StringRequest(Request.Method.POST, Groups_url, new Response.Listener<String>() {
+            StringRequest requestds = new StringRequest(Request.Method.POST, Groups_url, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String s) {
                     //Toast.makeText(getApplicationContext(),s,Toast.LENGTH_LONG).show();
@@ -320,7 +368,7 @@ public class MainActivity extends AppCompatActivity
                             for (int i = group.length() - 1; i >= 0; i--) {
                                 JSONObject g = group.getJSONObject(i);
                                 list_groups.add(new Group(g.getInt("id_group"),g.getString("groupname"),
-                                        g.getInt("id_admin"), g.getString("link"),getApplicationContext()));
+                                        g.getInt("id_admin"), g.getString("link"),MainActivity.this));
                             }
                             //progressDialog.dismiss();
                             adapter2.notifyDataSetChanged();
@@ -358,7 +406,16 @@ public class MainActivity extends AppCompatActivity
 
                     //Toast.makeText(getApplicationContext(),"gr"+volleyError.getMessage()
                     //        ,Toast.LENGTH_LONG).show();
-                    empty_groups.setText("Connection Error \n      try again "+ volleyError.getMessage());
+                    String err = "connection error ";
+                    try {
+                        byte[] htmlBodyBytes = volleyError.networkResponse.data;
+                        err+= new String(htmlBodyBytes);
+                    } catch (NullPointerException e) {
+                        err+= e.getMessage();
+                    }
+                    //Toast.makeText(getApplicationContext(), err+
+                    //        volleyError.getMessage(), Toast.LENGTH_LONG).show();
+                    empty_groups.setText(err);
                     j2 = new ng();
                 }
             }){
@@ -369,8 +426,12 @@ public class MainActivity extends AppCompatActivity
                     return parameters;
                 }
             };
-            request.setShouldCache(false);
-            mRequest.add(request);
+            requestds.setShouldCache(false);
+            requestds.setRetryPolicy(new DefaultRetryPolicy(
+                    100000,
+                    0,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            mRequest.add(requestds);
             return null;
         }
 
@@ -472,16 +533,22 @@ public class MainActivity extends AppCompatActivity
                 View rootView = inflater.inflate(R.layout.content_main, container, false);
 
                 empty_notes = (TextView) rootView.findViewById(R.id.no_notes);
-
+                empty_notes.setText("No Internet Connection");
                 //setHasOptionsMenu(true);
 
                 swipe = (SwipeRefreshLayout)rootView.findViewById(R.id.refresh_layot);
                 //swipe.setColorScheme(Color.BLUE,Color.RED,Color.GREEN);
+
+
                 swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-                        swipe.setRefreshing(true);
-                        ds();
+                        if (isConnected()) {
+                            swipe.setRefreshing(true);
+                            ds();
+                        }else {
+                            empty_notes.setText("No Internet Connection");
+                        }
                     }
                 });
 
@@ -516,7 +583,7 @@ public class MainActivity extends AppCompatActivity
                 View rootView = inflater.inflate(R.layout.groups_layout, container, false);
 
                 empty_groups = (TextView) rootView.findViewById(R.id.no_groups);
-
+                empty_groups.setText("No Internet Connection");
 
                 //empty.setText("You dont have notes yet");
                 FloatingActionButton fab = (FloatingActionButton)rootView.findViewById(R.id.fab_groups);
@@ -533,8 +600,12 @@ public class MainActivity extends AppCompatActivity
                 swipe2.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
                     public void onRefresh() {
-                        swipe2.setRefreshing(true);
-                        ds2();
+                        if (isConnected()) {
+                            swipe2.setRefreshing(true);
+                            ds2();
+                        }else {
+                            empty_groups.setText("No Internet Connection");
+                        }
                     }
                 });
 
@@ -593,7 +664,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
+    /*@Override
     protected void onRestart() {
         progressDialog.show();
         empty_notes.setText("");
@@ -601,10 +672,11 @@ public class MainActivity extends AppCompatActivity
         adapter.notifyDataSetChanged();
         j.execute();
         super.onResume();
-    }
+    }*/
 
     public static void ds(){
         //progressDialog.show();
+
         empty_notes.setText("");
         list_notes.clear();
         adapter.notifyDataSetChanged();
@@ -616,6 +688,135 @@ public class MainActivity extends AppCompatActivity
         list_groups.clear();
         adapter2.notifyDataSetChanged();
         j2.execute();
+    }
+
+    public class join_group extends AsyncTask{
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+
+            StringRequest request = new StringRequest(Request.Method.POST, Join_url, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String s) {
+                    try{
+                        JSONObject joined = new JSONObject(s);
+                        if (!joined.getBoolean("error")){
+                            mViewPager.setCurrentItem(1);
+                            new ng().execute();
+                            Toast.makeText(getApplicationContext(),"you joined group number "
+                                    +join_id,Toast.LENGTH_LONG).show();
+                        }else {
+                            Toast.makeText(getApplicationContext(),joined.getString("message"),
+                                    Toast.LENGTH_LONG).show();
+                        }
+
+
+
+                    }catch (JSONException e){
+                        Toast.makeText(getApplicationContext(),"Dd "+e.getMessage(),Toast.LENGTH_LONG).show();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    Toast.makeText(getApplicationContext(),"Ddd "+volleyError.getMessage(),Toast.LENGTH_LONG).show();
+                }
+            }){
+                @Override
+                protected Map<String, String> getParams() throws AuthFailureError {
+                    Map<String,String> parameters  = new HashMap<String, String>();
+                    parameters.put("id_user",String.valueOf(ID));
+                    return parameters;
+                }
+            };
+            request.setShouldCache(false);
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    100000,
+                    0,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+            mRequest.add(request);
+            return null;
+        }
+
+    }
+
+    public boolean isThereConnection(){
+        ConnectivityManager manager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo i = manager.getActiveNetworkInfo();
+        //return i != null && i.isConnected();
+        return true;
+    }
+
+    public static boolean isConnected(){
+        NetworkInfo i = manager.getActiveNetworkInfo();
+        //return i != null && i.isConnected();
+        return true;
+    }
+
+
+    public class loadProfile extends AsyncTask{
+
+        @Override
+        protected Object doInBackground(Object[] params) {
+
+            StringRequest request = new StringRequest(Request.Method.POST, Profile_url, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String s) {
+                    //Toast.makeText(getApplicationContext(),s,Toast.LENGTH_LONG).show();
+                    try{
+                        JSONObject pic = new JSONObject(s);
+                        if (!pic.getBoolean("error")){
+                            try {
+
+                                String pa = "http://192.168.43.4:80/app/profile_pictures/" +
+                                        pic.getString("profile");
+
+                                Picasso.with(getApplicationContext())
+                                        .load(pa)
+                                        .resizeDimen(R.dimen.picture_size,R.dimen.picture_size)
+                                        .skipMemoryCache()
+                                        .networkPolicy(NetworkPolicy.NO_CACHE)
+                                        .memoryPolicy(MemoryPolicy.NO_CACHE)
+                                        .into(profile);
+                            }catch (Exception e){
+                                Toast.makeText(getApplicationContext(),pic.getString("message"),
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }else {
+                            Toast.makeText(getApplicationContext(),pic.getString("message"),
+                                    Toast.LENGTH_LONG).show();
+                        }
+
+
+
+                    }catch (JSONException e){
+                        Toast.makeText(getApplicationContext(),"Dd "+e.getMessage(),Toast.LENGTH_LONG).show();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    Toast.makeText(getApplicationContext(),"Ddd "+volleyError.getMessage(),Toast.LENGTH_LONG).show();
+                }
+            }){
+                @Override
+                protected Map<String, String> getParams() throws AuthFailureError {
+                    Map<String,String> parameters  = new HashMap<String, String>();
+                    parameters.put("id_user",String.valueOf(ID));
+                    return parameters;
+                }
+            };
+            request.setShouldCache(false);
+            request.setRetryPolicy(new DefaultRetryPolicy(
+                    100000,
+                    0,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+            mRequest.add(request);
+            return null;
+        }
+
     }
 }
 
