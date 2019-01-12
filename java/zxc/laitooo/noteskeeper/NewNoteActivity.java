@@ -42,7 +42,9 @@ public class NewNoteActivity extends AppCompatActivity {
     ProgressDialog progressDialog;
 
 
-    public static String Save_url = "http://notes-keeper.000webhostapp.com/addNoteApp.php";
+    public static String Save_url = "http://192.168.43.4:80/app/addNoteApp.php";
+
+    //public static String Save_url = "http://notes-keeper.000webhostapp.com/addNoteApp.php";
 
 
 
@@ -171,7 +173,7 @@ public class NewNoteActivity extends AppCompatActivity {
         protected Map<String, String> getParams() throws AuthFailureError {
             Map<String,String> parameters  = new HashMap<String, String>();
             ManageUser m = new ManageUser(getApplicationContext());
-            parameters.put("username",m.GetUserName());
+            parameters.put("id_user",String.valueOf(m.GetUserId()));
             if (stti.equals("")){
                 parameters.put("title","no title");
             }else {
