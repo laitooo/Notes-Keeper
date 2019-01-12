@@ -2,6 +2,8 @@ package zxc.laitooo.noteskeeper;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,6 +15,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Network;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -47,7 +51,8 @@ public class LoginActivity extends AppCompatActivity {
     String em,pa;
     ProgressDialog progressDialog;
 
-    public static String Login_URL = "http://notes-keeper.000webhostapp.com/home.php";
+    //public static String Login_URL = "http://notes-keeper.000webhostapp.com/home.php";
+    public static String Login_URL = "http://192.168.43.4:80/app/home.php";
 
     private RequestQueue mRequest;
 
@@ -75,19 +80,23 @@ public class LoginActivity extends AppCompatActivity {
         j.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                err.setText("");
-                em = email.getText().toString();
-                pa = passwod.getText().toString();
-                if(!em.equals("")){
-                    if (!pa.equals("")) {
-                        progressDialog.setTitle("Please wait...");
-                        progressDialog.show();
-                        new lo().execute();
-                    }else {
-                        err.setText("Please enter your password");
+                if (isThereConnection()) {
+                    err.setText("");
+                    em = email.getText().toString();
+                    pa = passwod.getText().toString();
+                    if (!em.equals("")) {
+                        if (!pa.equals("")) {
+                            progressDialog.setTitle("Please wait...");
+                            progressDialog.show();
+                            new lo().execute();
+                        } else {
+                            err.setText("Please enter your password");
+                        }
+                    } else {
+                        err.setText("Please enter your email");
                     }
                 }else {
-                    err.setText("Please enter your email");
+                    err.setText("No Internet Connection");
                 }
             }
         });
@@ -100,7 +109,7 @@ public class LoginActivity extends AppCompatActivity {
             StringRequest r = new StringRequest(Request.Method.POST, Login_URL, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String s) {
-                    //j.setText(s);
+                    //Toast.makeText(getApplicationContext(),s,Toast.LENGTH_LONG).show();
                     try {
                         JSONObject object = new JSONObject(s);
                         boolean error = object.getBoolean("error");
@@ -142,6 +151,11 @@ public class LoginActivity extends AppCompatActivity {
                     return parameters;
                 }
             };
+
+            r.setRetryPolicy(new DefaultRetryPolicy(
+                    100000,
+                    0,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
             mRequest.add(r);
 
             return null;
@@ -162,5 +176,13 @@ public class LoginActivity extends AppCompatActivity {
         Intent intent = new Intent(getApplicationContext(),SignupActivity.class);
         startActivity(intent);
         finish();
+    }
+
+
+    public boolean isThereConnection(){
+        ConnectivityManager manager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo i = manager.getActiveNetworkInfo();
+        //return i != null && i.isConnected();
+        return true;
     }
 }
