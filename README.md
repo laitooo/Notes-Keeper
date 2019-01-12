@@ -1,6 +1,6 @@
 # Notes-Keeper
 
-# under development
+under development
 an adnroid application that let you save notes on server
 
 provided php server files
@@ -23,3 +23,8 @@ done:
 14- loading profile picture
 15- uploading profile picture
 16- changing profile picture
+
+
+
+
+changed to local host instead of 000webhost since they dont remote access 
