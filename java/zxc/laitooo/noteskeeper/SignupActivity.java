@@ -2,6 +2,8 @@ package zxc.laitooo.noteskeeper;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -33,7 +36,8 @@ public class SignupActivity extends AppCompatActivity {
     String em,un,pa1,pa2;
     ProgressDialog progressDialog;
 
-    public static String Signup_URL = "http://notes-keeper.000webhostapp.com/home.php";
+    //public static String Signup_URL = "http://notes-keeper.000webhostapp.com/home.php";
+    public static String Signup_URL = "http://192.168.43.4:80/app/home.php";
 
     private RequestQueue mRequest;
 
@@ -57,37 +61,42 @@ public class SignupActivity extends AppCompatActivity {
         j.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                err.setText("");
-                em = email.getText().toString();
-                un = username.getText().toString();
-                pa1 = password1.getText().toString();
-                pa2 = password2.getText().toString();
-                if(!em.equals("")){
-                    if (!un.equals("")) {
-                        if (!pa1.equals("")){
-                            if (!pa2.equals("")){
-                                if (pa1.length()>7){
-                                    if (pa1.equals(pa2)){
-                                        progressDialog.setTitle("Please wait...");
-                                        progressDialog.show();
-                                        new si().execute();
-                                    }else {
-                                        err.setText("Passowrd doesn't match");
+                if (isThereConnection()) {
+                    err.setText("");
+                    em = email.getText().toString();
+                    un = username.getText().toString();
+                    pa1 = password1.getText().toString();
+                    pa2 = password2.getText().toString();
+                    if (!em.equals("")) {
+                        if (!un.equals("")) {
+                            if (!pa1.equals("")) {
+                                if (!pa2.equals("")) {
+                                    if (pa1.length() > 7) {
+                                        if (pa1.equals(pa2)) {
+                                            progressDialog.setTitle("Please wait...");
+                                            progressDialog.show();
+                                            new si().execute();
+                                        } else {
+                                            err.setText("Passowrd doesn't match");
+                                        }
+                                    } else {
+                                        err.setText("password at least 8 charracters");
                                     }
-                                }else {
-                                    err.setText("password at least 8 charracters");
+                                } else {
+                                    err.setText("Please confirm your password");
                                 }
-                            }else {
-                                err.setText("Please confirm your password");
+                            } else {
+                                err.setText("Please enter your password");
                             }
-                        }else {
-                            err.setText("Please enter your password");
+                        } else {
+                            err.setText("Please enter your username");
                         }
-                    }else {
-                        err.setText("Please enter your username");
+                    } else {
+                        err.setText("Please enter your email");
                     }
+
                 }else {
-                    err.setText("Please enter your email");
+                    err.setText("No Internet Connection");
                 }
             }
         });
@@ -142,6 +151,11 @@ public class SignupActivity extends AppCompatActivity {
                     return parameters;
                 }
             };
+            r.setRetryPolicy(new DefaultRetryPolicy(
+                    100000,
+                    0,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+            mRequest.add(r);
             mRequest.add(r);
 
             return null;
@@ -164,5 +178,12 @@ public class SignupActivity extends AppCompatActivity {
     public void logAct(View view){
         startActivity(new Intent(getApplicationContext(),SignupActivity.class));
         finish();
+    }
+
+    public boolean isThereConnection(){
+        ConnectivityManager manager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo i = manager.getActiveNetworkInfo();
+        //return i != null && i.isConnected();
+        return true;
     }
 }
