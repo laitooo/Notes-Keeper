@@ -1,34 +1,59 @@
 <?php
+	
+	require_once dirname(__FILE__).'/connect.php';
 
-//echo '<h1>Welcome to Notes keeper</h1>';
+	$db = new connect();
 
-require 'notesOperations.php';
+	$con = $db->connectDB();
+	
 
-$response = array();
 
-if ($_SERVER['REQUEST_METHOD']=='POST') {
+	$stmt = $con->prepare("SELECT * FROM `groups`");
+	//$stmt->bind_param("s",$_POST['username']);
+	$stmt->bind_result($id, $groupname, $id_admin, $link );
+	$stmt->execute();
+	
+	$counter = 0;
+	
+	$temp_array = array();
+	
+	while($stmt->fetch()){
+	    
+	    
+	    $tmp = array();
+	    $tmp["id"] = $id;
+	    $tmp["groupname"] = $groupname;
+	    $tmp["id_admin"] = $id_admin;
+	    $tmp["link"] = $link;
+	    
+	    $temp_array[$counter] = $tmp;
+        $counter = $counter +1;
+	    /*echo '   '.$counter.
+	    '<span style="margin-left:2em"> </span>'.$title.
+	    '<span style="margin-left:2em"> </span>'.
+	    $content.'<span style="margin-left:2em"> </span>'.
+	    $date.'<br></br>';*/
 
-	if (isset($_POST['id_user']) and isset($_POST['title']) and isset($_POST['content'])) {
-
-		$db = new notesOperations();
-
-		$result = $db->addNote($_POST['id_user'] +0, $_POST['title'] , $_POST['content']);
-
-		if ($result == 1) {
-			$response['error'] = false;
-			$response['message'] = 'your note has been saved';
-			$response['title'] = $_POST['title'];
-			$response['content'] = $_POST['content'];
-			//echo'<script> window.location="index.php"; </script> ';
-		}elseif ($result == 2) {
-			$response['error'] = true;
-			$response['message'] = 'error occured, try again later';
-		}
-
-	}else{
-		$response['error'] = true;
-		$response['message'] = 'Required fields are missing';
 	}
-}
+	
+	//if($number_of_rows > 0) {
+		//while ($row = mysqli_fetch_assoc($result)) {
+		//	$temp_array[] = $row;
+		//}
+	//}
+	
+	
+	
+	//header('Content-Type: application/json');
+	echo json_encode(array("groups"=>$temp_array),JSON_UNESCAPED_SLASHES);
+	mysqli_close($con);
+	
+//}
 
-echo json_encode($response);
+
+
+
+
+
+
+?>
